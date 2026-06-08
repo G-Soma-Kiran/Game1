@@ -117,7 +117,7 @@ Vector Game::randomPositionVector()
 
 Vector Game::speedToVelocity(const float angle , const float speed)
 {
-    return Vector ( speed * std::cosf(angle) , speed * std::sinf(speed));
+    return Vector ( speed * std::cosf(angle*0.0174533) , speed * std::sinf(angle*0.0174533));
 }
 
 Vector Game::speedToVelocity(const Vector direction , const float speed)
@@ -171,7 +171,8 @@ void Game::sMovement()
     const EntityVec& allEntities = m_entities.getEntities();
     for ( auto e : allEntities)
     {
-        e->cTransform->position+=e->cTransform->velocity;   
+        e->cTransform->position+=e->cTransform->velocity;
+        e->cShape->circle.rotate(sf::degrees(e->cTransform->angle));   
     }
 }
 
@@ -197,7 +198,8 @@ void Game::sUserInputTakingAndHandling()
             }
         }
     }
-    m_player->cTransform->velocity = m_player->cInput->getVelocityVector();
+    // m_player->cTransform->velocity = m_player->cInput->getVelocityVector();
+    m_player->cTransform->velocity = speedToVelocity(m_player->cInput->getVelocityVector() , m_configPlayer.speed);
 }
 
 void Game::sEnemySpawner()
@@ -229,8 +231,8 @@ void Game::sKiller()
                 e->cLifespan->remaining-=1;
                 sf::Color eFillColor = e->cShape->circle.getFillColor();
                 sf::Color eOutlineColor = e->cShape->circle.getOutlineColor();
-                e->cShape->circle.setFillColor(sf::Color(eFillColor.r , eFillColor.g , eFillColor.b , eFillColor.a - (1/(e->cLifespan->total)) ));
-                e->cShape->circle.setOutlineColor(sf::Color(eOutlineColor.r , eOutlineColor.g , eOutlineColor.b , eOutlineColor.a - (1/(e->cLifespan->total)) ));
+                e->cShape->circle.setFillColor(sf::Color(eFillColor.r , eFillColor.g , eFillColor.b , eFillColor.a - (255/(e->cLifespan->total)) ));
+                e->cShape->circle.setOutlineColor(sf::Color(eOutlineColor.r , eOutlineColor.g , eOutlineColor.b , eOutlineColor.a - (255/(e->cLifespan->total)) ));
             }
         }
     }
@@ -318,6 +320,7 @@ void Game::run()
 
 int main()
 {
+
     Game test("config.txt");
     test.run();
 
