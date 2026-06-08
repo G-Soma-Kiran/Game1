@@ -33,16 +33,15 @@ class CCollision
 
 class CInput
 {
-    private:
-        Vector unitVelocity = { 0 , 0 };
+    // private:
+    //     Vector unitVelocity = { 0 , 0 };
     public:
-        Vector getUnitVelocityVector();
-        void updateUnitVelocityVector(std::optional<sf::Event> opt);
+        Vector getVelocityVector();
+        void updateInput(std::optional<sf::Event> opt);
         bool up = false;
         bool down = false;
         bool left = false;
         bool right = false;
-        bool shoot = false;
 
 };
 

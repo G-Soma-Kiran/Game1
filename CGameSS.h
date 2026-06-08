@@ -88,7 +88,7 @@ class Game
         void changePause(bool value);
 
         void sMovement();
-        void sUserInput();
+        void sUserInputTakingAndHandling();
         void sKiller();
         void sRender();
         void sEnemySpawner();

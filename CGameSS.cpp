@@ -96,6 +96,7 @@ std::shared_ptr<Entity> Game::spawnPlayer()
     p->cCollision = std::make_shared<CCollision>(m_configPlayer.collisionRadius);
     p->cShape = std::make_shared<CShape>(m_configPlayer.shapeRadius , m_configPlayer.vertices , sf::Color(m_configPlayer.fillColor.R ,m_configPlayer.fillColor.G , m_configPlayer.fillColor.B ) , sf::Color(m_configPlayer.outlineColor.R , m_configPlayer.outlineColor.G , m_configPlayer.outlineColor.B) , m_configPlayer.outlineThickness);
     p->cTransform = std::make_shared<CTransform>(Vector(m_window.getSize().x/2 , m_window.getSize().y/2) , Vector(0 , 0) , m_configPlayer.rotationAngle);
+    return p;
 }
 
 float Game::randomInRange(float min , float max)
@@ -174,14 +175,150 @@ void Game::sMovement()
     }
 }
 
-void Game::sUserInput()
+void Game::sUserInputTakingAndHandling()
 {
-    auto& Player = m_entities.getEntities("Player");
-    for( auto e : Player)
+    while(auto opt = m_window.pollEvent())
     {
-        if(m_entities.getid(e) == 1)
+        m_player->cInput->updateInput(opt);
+        if(auto* mouse = opt->getIf<sf::Event::MouseButtonPressed>())
         {
+            spawnBullet({mouse->position.x , mouse->position.y});
+        }
+        if(auto* p = opt->getIf<sf::Event::KeyPressed>())
+        {
+            if(p->code == sf::Keyboard::Key::P)
+            {
+                changePause(!m_isPaused);
+                // m_isPaused = !m_isPaused;
+            }
+            if(p->code == sf::Keyboard::Key::Escape)
+            {
+                m_window.close();
+            }
+        }
+    }
+    m_player->cTransform->velocity = m_player->cInput->getVelocityVector();
+}
+
+void Game::sEnemySpawner()
+{
+    if(m_spawner == 0)
+    {
+        spawnEnemy();
+        m_spawner = m_configEnemy.spawnInterval;
+    }
+    else
+    {
+        m_spawner--;
+    }
+}
+
+void Game::sKiller()
+{
+    const EntityVec& allEntities = m_entities.getEntities();
+    for( auto e : allEntities)
+    {
+        if(e->cLifespan)
+        {
+            if(e->cLifespan->remaining == 0)
+            {
+                e->destroy();
+            }
+            else
+            {
+                e->cLifespan->remaining-=1;
+                sf::Color eFillColor = e->cShape->circle.getFillColor();
+                sf::Color eOutlineColor = e->cShape->circle.getOutlineColor();
+                e->cShape->circle.setFillColor(sf::Color(eFillColor.r , eFillColor.g , eFillColor.b , eFillColor.a - (1/(e->cLifespan->total)) ));
+                e->cShape->circle.setOutlineColor(sf::Color(eOutlineColor.r , eOutlineColor.g , eOutlineColor.b , eOutlineColor.a - (1/(e->cLifespan->total)) ));
+            }
+        }
+    }
+}
+void Game::sCollision()
+{
+    const EntityVec& allEntities = m_entities.getEntities();
+    for( auto e : allEntities)
+    {
+        if(e->cCollision)
+        {
+            Vector ePos = e->cTransform->position;
+            if(ePos.x >= m_window.getSize().x - e->cCollision->radius || ePos.x <= e->cCollision->radius)
+            {
+                e->cTransform->velocity.x = -(e->cTransform->velocity.x);
+            }
+            if(ePos.y >= m_window.getSize().y - e->cCollision->radius || ePos.y <= e->cCollision->radius)
+            {
+                e->cTransform->velocity.y = -(e->cTransform->velocity.y);
+            }
+
+            if( (e->tag() == "Enemy" && (m_player->cCollision->radius + e->cCollision->radius)*(m_player->cCollision->radius + e->cCollision->radius) > Vector(ePos - m_player->cTransform->position).lengthSquared()))
+            {
+                if(e->isAlive())
+                {
+                    e->destroy();
+                    spawnBrokenParts(e);
+                    m_score += e->cScore->score;
+                }
+                m_player->cTransform->position = Vector(m_window.getSize().x/2 , m_window.getSize().y/2);
+            }
+
+            const EntityVec& allBullets = m_entities.getEntities("Bullet");
+            for( auto eB : allBullets)
+            {
+                if( ( eB->cCollision->radius + e->cCollision->radius ) * ( eB->cCollision->radius + e->cCollision->radius ) > Vector(eB->cTransform->position - e->cTransform->position ).lengthSquared() )
+                {
+                    if(e->isAlive())
+                    {
+                        e->destroy();
+                        spawnBrokenParts(e);
+                        m_score += e->cScore->score;
+                        break;
+                    }
+                }
+            }
+
 
         }
     }
+}
+
+void Game::spawnBrokenParts(std::shared_ptr<Entity> entity)
+{
+    size_t vertices = entity->cShape->circle.getPointCount();
+    size_t increment = 360/vertices;
+    for (size_t i=0; i<=360 ; i+=increment)
+    {
+        auto p = m_entities.addEntity("BrokenPart");
+        float velocityAngle = i;
+        p->cTransform = std::make_shared<CTransform>(entity->cTransform->position , speedToVelocity(i , entity->cTransform->velocity.length()) , entity->cTransform->angle);
+        p->cShape = std::make_shared<CShape>(entity->cShape->circle.getRadius()/2 , entity->cShape->circle.getPointCount() , entity->cShape->circle.getFillColor() , entity->cShape->circle.getOutlineColor() , entity->cShape->circle.getOutlineThickness() );
+        p->cCollision = std::make_shared<CCollision>(entity->cCollision->radius/2);
+        p->cLifespan = std::make_shared<CLifespan>(m_configEnemy.brokenPartLifeSpan);
+    }
+}
+
+void Game::run()
+{
+    while(m_window.isOpen())
+    {
+        m_entities.update();
+
+        sUserInputTakingAndHandling();
+
+        sEnemySpawner();
+        sMovement();
+        sCollision();
+        m_window.clear(sf::Color::Black);
+        sRender();
+        m_window.display();
+        sKiller();
+    }
+}
+
+int main()
+{
+    Game test("config.txt");
+    test.run();
+
 }

@@ -25,3 +25,32 @@ CCollision::CCollision(float radius):radius(radius){};
 CScore::CScore(int score):score(score){};
 
 CLifespan::CLifespan(int total ):total(total),remaining(total){};
+
+
+void CInput::updateInput(std::optional<sf::Event> opt)
+{
+    if(auto* p = opt->getIf<sf::Event::KeyPressed>())
+    {
+        if(p->code == sf::Keyboard::Key::Up){ up = true;}
+        if(p->code == sf::Keyboard::Key::Down){ down = true;}
+        if(p->code == sf::Keyboard::Key::Left){ left = true;}
+        if(p->code == sf::Keyboard::Key::Right){ right = true;}
+    }
+
+    if( auto* p = opt->getIf<sf::Event::KeyReleased>() )
+    {
+        if(p->code == sf::Keyboard::Key::Up){ up = false;}
+        if(p->code == sf::Keyboard::Key::Down){ down = false;}
+        if(p->code == sf::Keyboard::Key::Left){ left = false;}
+        if(p->code == sf::Keyboard::Key::Right){ right = false;}
+    }
+}
+
+Vector CInput::getVelocityVector()
+{
+    int positiveYvalue = up? 1 : 0;
+    int negativeYvalue = down? -1 : 0;
+    int positiveXvalue = right? 1 : 0;
+    int negativeXvalue = left? -1 : 0;
+    return Vector(positiveXvalue + negativeXvalue , positiveYvalue + negativeYvalue );
+}
