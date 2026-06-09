@@ -14,8 +14,8 @@ typedef struct RGB{
 }RGB;
 
 typedef struct configWindow{
-    int width;
-    int height;
+    unsigned int width;
+    unsigned int height;
     int frameRateUpperLimit;
     bool fullScreen;
 }configWindow;
@@ -104,6 +104,7 @@ class Game
         void specialWeapon();
         Vector speedToVelocity(const Vector direction , const float speed );
         Vector speedToVelocity(const float angle , const float speed );
+        Vector clampPlayerPosition();
     public:
         Game(const std::string& configFilePath);
         void run();

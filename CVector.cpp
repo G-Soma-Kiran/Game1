@@ -73,6 +73,7 @@
 
         Vector Vector::normalize() const{
             float L = this->length();
+            if(L == 0) return Vector(0 , 0);
             return Vector(x/L , y/L);
         }
 

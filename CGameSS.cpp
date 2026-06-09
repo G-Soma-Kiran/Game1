@@ -81,6 +81,7 @@ void Game::init(const std::string& configFilePath)
     }
 
     m_player = spawnPlayer();
+    std::srand(std::time(0));
 
 }
 
@@ -117,7 +118,7 @@ Vector Game::randomPositionVector()
 
 Vector Game::speedToVelocity(const float angle , const float speed)
 {
-    return Vector ( speed * std::cosf(angle*0.0174533) , speed * std::sinf(angle*0.0174533));
+    return Vector ( speed * std::cosf(angle*0.0174533) , -speed * std::sinf(angle*0.0174533));
 }
 
 Vector Game::speedToVelocity(const Vector direction , const float speed)
@@ -172,6 +173,10 @@ void Game::sMovement()
     for ( auto e : allEntities)
     {
         e->cTransform->position+=e->cTransform->velocity;
+        if(e->tag() == "Player")
+        {
+            e->cTransform->position = clampPlayerPosition();
+        }
         e->cShape->circle.rotate(sf::degrees(e->cTransform->angle));   
     }
 }
@@ -180,10 +185,12 @@ void Game::sUserInputTakingAndHandling()
 {
     while(auto opt = m_window.pollEvent())
     {
+        if (opt->is<sf::Event::Closed>()) {m_window.close();}
+        
         m_player->cInput->updateInput(opt);
         if(auto* mouse = opt->getIf<sf::Event::MouseButtonPressed>())
         {
-            spawnBullet({mouse->position.x , mouse->position.y});
+            spawnBullet({mouse->position.x + 0.0f , mouse->position.y + 0.0f});
         }
         if(auto* p = opt->getIf<sf::Event::KeyPressed>())
         {
@@ -265,17 +272,20 @@ void Game::sCollision()
                 m_player->cTransform->position = Vector(m_window.getSize().x/2 , m_window.getSize().y/2);
             }
 
-            const EntityVec& allBullets = m_entities.getEntities("Bullet");
-            for( auto eB : allBullets)
-            {
-                if( ( eB->cCollision->radius + e->cCollision->radius ) * ( eB->cCollision->radius + e->cCollision->radius ) > Vector(eB->cTransform->position - e->cTransform->position ).lengthSquared() )
+            if(e->tag() == "Enemy")
+            { 
+                const EntityVec& allBullets = m_entities.getEntities("Bullet");
+                for( auto eB : allBullets)
                 {
-                    if(e->isAlive())
+                    if( ( eB->cCollision->radius + e->cCollision->radius ) * ( eB->cCollision->radius + e->cCollision->radius ) > Vector(eB->cTransform->position - e->cTransform->position ).lengthSquared() )
                     {
-                        e->destroy();
-                        spawnBrokenParts(e);
-                        m_score += e->cScore->score;
-                        break;
+                        if(e->isAlive())
+                        {
+                            e->destroy();
+                            spawnBrokenParts(e);
+                            m_score += e->cScore->score;
+                            break;
+                        }
                     }
                 }
             }
@@ -304,6 +314,7 @@ void Game::run()
 {
     while(m_window.isOpen())
     {
+
         m_entities.update();
 
         sUserInputTakingAndHandling();
@@ -318,6 +329,29 @@ void Game::run()
     }
 }
 
+Vector Game::clampPlayerPosition()
+{
+    Vector ultimate = m_player->cTransform->position;
+    if(m_player->cTransform->velocity.x > 0)
+    {    
+        ultimate.x = std::min(ultimate.x , m_window.getSize().x - m_player->cCollision->radius );      
+    }
+    if(m_player->cTransform->velocity.x < 0)
+    {
+        ultimate.x = std::max(ultimate.x , m_player->cCollision->radius);
+    }
+
+    if(m_player->cTransform->velocity.y > 0)
+    {    
+        ultimate.y = std::min(ultimate.y , m_window.getSize().y - m_player->cCollision->radius );      
+    }
+    if(m_player->cTransform->velocity.y < 0)
+    {
+        ultimate.y = std::max(ultimate.y , m_player->cCollision->radius);
+    }
+    return ultimate;
+    
+}
 int main()
 {
 
