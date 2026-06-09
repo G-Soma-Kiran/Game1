@@ -73,7 +73,7 @@ class Game
         EntityManager m_entities;
         std::shared_ptr<Entity> m_player;
         sf::Font m_font;
-        // sf::Text m_text;
+        std::optional<sf::Text> m_text;
         configWindow m_configWindow;
         configFont m_configFont;
         configPlayer m_configPlayer;

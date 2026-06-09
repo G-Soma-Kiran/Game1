@@ -52,6 +52,9 @@ Game::Game(const std::string& configFilePath) //:  m_text(m_font)
 }
 void Game::init(const std::string& configFilePath)
 {
+    std::srand(std::time(0));
+
+
     std::ifstream file(configFilePath);
     std::string temp;
     if(file >> temp && temp == "Window")
@@ -65,6 +68,14 @@ void Game::init(const std::string& configFilePath)
     if(file >> temp && temp == "Bullet")
     file >> m_configBullet.shapeRadius >> m_configBullet.collisionRadius >> m_configBullet.speed >> m_configBullet.fillColor.R >> m_configBullet.fillColor.G >> m_configBullet.fillColor.B >> m_configBullet.outlineColor.R >> m_configBullet.outlineColor.G >> m_configBullet.outlineColor.B >> m_configBullet.outlineThickness >> m_configBullet.shapeVertices >> m_configBullet.lifespan >> m_configBullet.rotationAngle ;  
 
+    if(!m_font.openFromFile(m_configFont.fontFilePath))
+    {
+        std::cerr << "Font Problem" << std::endl;
+    }
+    m_text.emplace(m_font , "Score : 0" , m_configFont.fontSize);
+    m_text->setFillColor(sf::Color(m_configFont.fontColor.R, m_configFont.fontColor.G, m_configFont.fontColor.B));
+    m_text->setPosition({10.0f , 10.0f}); //Random Positiion to start with.
+
     if(m_configWindow.fullScreen)
     {
         m_window.create(sf::VideoMode({m_configWindow.width , m_configWindow.height}) , "Geometry Wars!!!" ,sf::Style::Default ,  sf::State::Fullscreen) ;
@@ -75,13 +86,8 @@ void Game::init(const std::string& configFilePath)
     }
     m_window.setFramerateLimit(m_configWindow.frameRateUpperLimit); 
 
-    if(!m_font.openFromFile(m_configFont.fontFilePath))
-    {
-        std::cerr << "Font Problem" << std::endl;
-    }
 
     m_player = spawnPlayer();
-    std::srand(std::time(0));
 
 }
 
@@ -161,9 +167,11 @@ void Game::sRender()
     for ( auto e : allEntities)
     {
         e->cShape->circle.setPosition(e->cTransform->position.toVector2f());
-        e->cShape->circle.rotate(sf::degrees(e->cTransform->angle / 60.0f));
+        e->cShape->circle.rotate(sf::degrees(e->cTransform->angle));
         m_window.draw(e->cShape->circle);
     }
+    m_text->setString("Score: " + std::to_string(m_score));
+    m_window.draw(*m_text);
     // m_window.display();
 }
 
@@ -177,7 +185,7 @@ void Game::sMovement()
         {
             e->cTransform->position = clampPlayerPosition();
         }
-        e->cShape->circle.rotate(sf::degrees(e->cTransform->angle));   
+        // e->cShape->circle.rotate(sf::degrees(e->cTransform->angle));   
     }
 }
 
@@ -186,11 +194,12 @@ void Game::sUserInputTakingAndHandling()
     while(auto opt = m_window.pollEvent())
     {
         if (opt->is<sf::Event::Closed>()) {m_window.close();}
-        
+
         m_player->cInput->updateInput(opt);
+        
         if(auto* mouse = opt->getIf<sf::Event::MouseButtonPressed>())
         {
-            spawnBullet({mouse->position.x + 0.0f , mouse->position.y + 0.0f});
+            if(!m_isPaused) {spawnBullet({mouse->position.x + 0.0f , mouse->position.y + 0.0f});}
         }
         if(auto* p = opt->getIf<sf::Event::KeyPressed>())
         {
@@ -247,6 +256,7 @@ void Game::sKiller()
 void Game::sCollision()
 {
     const EntityVec& allEntities = m_entities.getEntities();
+    const EntityVec& allBullets = m_entities.getEntities("Bullet");
     for( auto e : allEntities)
     {
         if(e->cCollision)
@@ -274,7 +284,6 @@ void Game::sCollision()
 
             if(e->tag() == "Enemy")
             { 
-                const EntityVec& allBullets = m_entities.getEntities("Bullet");
                 for( auto eB : allBullets)
                 {
                     if( ( eB->cCollision->radius + e->cCollision->radius ) * ( eB->cCollision->radius + e->cCollision->radius ) > Vector(eB->cTransform->position - e->cTransform->position ).lengthSquared() )
@@ -298,8 +307,9 @@ void Game::sCollision()
 void Game::spawnBrokenParts(std::shared_ptr<Entity> entity)
 {
     size_t vertices = entity->cShape->circle.getPointCount();
+    size_t loopIterations = vertices;
     size_t increment = 360/vertices;
-    for (size_t i=0; i<=360 ; i+=increment)
+    for (size_t i=0; i<360 && loopIterations > 0; i+=increment , loopIterations--)
     {
         auto p = m_entities.addEntity("BrokenPart");
         float velocityAngle = i;
@@ -316,16 +326,17 @@ void Game::run()
     {
 
         m_entities.update();
+        
+        sUserInputTakingAndHandling(); //As Input Handling is also done in this function the pausing is integrated inside the function
+        if(!m_window.isOpen()) break;  //Efficiency thingy
 
-        sUserInputTakingAndHandling();
-
-        sEnemySpawner();
-        sMovement();
-        sCollision();
+        if(!m_isPaused)sEnemySpawner();
+        if(!m_isPaused)sMovement();
+        if(!m_isPaused)sCollision();
+        if(!m_isPaused)sKiller();
         m_window.clear(sf::Color::Black);
         sRender();
         m_window.display();
-        sKiller();
     }
 }
 
