@@ -1,7 +1,7 @@
 #include<SFML/Graphics.hpp>
 #include<math.h>
 #include<iostream>
-#include"CVector.h"
+#include"CVector.hpp"
 
         Vector::Vector(){};
         Vector::Vector(float x , float y) : x(x) , y(y){};

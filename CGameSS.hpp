@@ -1,9 +1,9 @@
 #pragma once
 
 #include<iostream>
-#include"CVector.h"
-#include"CEntityManager.h"
-#include"CComponents.h"
+#include"CVector.hpp"
+#include"CEntityManager.hpp"
+#include"CComponents.hpp"
 #include<fstream>
 #include<SFML/Graphics.hpp>
 

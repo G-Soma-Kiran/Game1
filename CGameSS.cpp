@@ -1,10 +1,10 @@
 #include<iostream>
-#include"CVector.h"
-#include"CEntityManager.h"
-#include"CComponents.h"
+#include"CVector.hpp"
+#include"CEntityManager.hpp"
+#include"CComponents.hpp"
 #include<fstream>
 #include<SFML/Graphics.hpp>
-#include"CGameSS.h"
+#include"CGameSS.hpp"
 #include<memory>
 #include<cstdlib>
 #include<ctime>
@@ -325,15 +325,17 @@ void Game::run()
     while(m_window.isOpen())
     {
 
-        m_entities.update();
         
         sUserInputTakingAndHandling(); //As Input Handling is also done in this function the pausing is integrated inside the function
         if(!m_window.isOpen()) break;  //Efficiency thingy
-
         if(!m_isPaused)sEnemySpawner();
+        
+        m_entities.update();
+
         if(!m_isPaused)sMovement();
         if(!m_isPaused)sCollision();
         if(!m_isPaused)sKiller();
+        
         m_window.clear(sf::Color::Black);
         sRender();
         m_window.display();

@@ -1,8 +1,8 @@
 #include<iostream>
 #include<memory>
-#include"CComponents.h"
-#include"CVector.h"
-#include"CEntityManager.h"
+#include"CComponents.hpp"
+#include"CVector.hpp"
+#include"CEntityManager.hpp"
 #include<vector>
 #include<map>
 #include<algorithm>

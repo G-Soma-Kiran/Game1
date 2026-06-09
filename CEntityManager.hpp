@@ -3,8 +3,8 @@
 
 #include<iostream>
 #include<memory>
-#include"CComponents.h"
-#include"CVector.h"
+#include"CComponents.hpp"
+#include"CVector.hpp"
 #include<vector>
 #include<map>
 

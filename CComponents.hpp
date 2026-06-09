@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include"CVector.h"
+#include"CVector.hpp"
 #include<iostream>
 #include<memory>
 #include<SFML/Graphics.hpp>
