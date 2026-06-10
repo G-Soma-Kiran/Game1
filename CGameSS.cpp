@@ -247,8 +247,10 @@ void Game::sKiller()
                 e->cLifespan->remaining-=1;
                 sf::Color eFillColor = e->cShape->circle.getFillColor();
                 sf::Color eOutlineColor = e->cShape->circle.getOutlineColor();
-                e->cShape->circle.setFillColor(sf::Color(eFillColor.r , eFillColor.g , eFillColor.b , eFillColor.a - (255/(e->cLifespan->total)) ));
-                e->cShape->circle.setOutlineColor(sf::Color(eOutlineColor.r , eOutlineColor.g , eOutlineColor.b , eOutlineColor.a - (255/(e->cLifespan->total)) ));
+                // e->cShape->circle.setFillColor(sf::Color(eFillColor.r , eFillColor.g , eFillColor.b , eFillColor.a - (255/(e->cLifespan->total)) ));
+                // e->cShape->circle.setOutlineColor(sf::Color(eOutlineColor.r , eOutlineColor.g , eOutlineColor.b , eOutlineColor.a - (255/(e->cLifespan->total)) ));
+                e->cShape->circle.setFillColor(sf::Color(eFillColor.r , eFillColor.g , eFillColor.b ,e->cLifespan->remaining < 0 ? 255 : 255 * ((e->cLifespan->remaining * 1.0f )/ e->cLifespan->total)));
+                e->cShape->circle.setOutlineColor(sf::Color(eOutlineColor.r , eOutlineColor.g , eOutlineColor.b , e->cLifespan->remaining < 0 ? 255 : 255 * ((e->cLifespan->remaining * 1.0f )/ e->cLifespan->total) ));
             }
         }
     }
