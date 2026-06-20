@@ -88,3 +88,22 @@
         {
             return {x , y};
         }
+
+        void Vector::drawAsPoint(sf::RenderWindow& window , sf::Color color ) const
+        {
+            sf::CircleShape circle(4.0f );
+            circle.setOrigin({4.0f , 4.0f});
+            circle.setPosition({this->x , this->y});
+            circle.setFillColor(color);
+            window.draw(circle);
+        }
+
+        void Vector::rotate( sf::Angle angle)
+        {
+            float temp_x  =  std::cos(angle.asRadians())*x + std::sin(angle.asRadians())*(-y);
+            float temp_y  = -std::sin(angle.asRadians())*x + std::cos(angle.asRadians())*(-y);
+            x = temp_x;
+            y = -temp_y;
+            if (std::abs(x) < 1e-5f) x = 0;
+            if (std::abs(y) < 1e-5f) y = 0;
+        }

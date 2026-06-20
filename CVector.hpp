@@ -27,6 +27,8 @@ class Vector
         float length() const;
         Vector normalize() const;
         void print() const;
+        void drawAsPoint(sf::RenderWindow& window , sf::Color color) const;
+        void rotate(sf::Angle angle);
 
         sf::Vector2f toVector2f() const;
 };
